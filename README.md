@@ -9,7 +9,8 @@ Get Started!
 ====
 
 Use the VoyaServlet in the web.xml configuration file and you're good to go.
-The url are mapping over conventions. <domain>/controller/method?name=john&year=1...
+The url are mapped over conventions. 
+<domain>/controller/method?name=john&year=1...
 This url maps to a controller class method.
 
 ```

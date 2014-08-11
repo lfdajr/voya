@@ -1,0 +1,20 @@
+<html lang="en">
+<head>
+    <title>Voya Framework - Welcome</title>
+    <script src="../resources/js/jquery.js"></script>
+
+    <script>
+        $(function(){
+            alert("teste");
+        });
+    </script>
+
+</head>
+<body>
+
+<h1>Welcome to Voya Framework!</h1>
+<img src="../resources/img/01.jpeg" />
+
+</body>
+</html>
+

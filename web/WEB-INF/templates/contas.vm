@@ -1,0 +1,5 @@
+<select id="contas" index="4">
+    #foreach($con in $objeto)
+    <option value="$con.id">$con.descricao</option>
+    #end
+</select>

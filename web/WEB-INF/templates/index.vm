@@ -1,0 +1,182 @@
+<html>
+
+    <head>
+        <meta charset="utf-8">
+            <script src="../resources/js/jquery.js"></script>
+            <script src="../resources/js/tables.js"></script>
+            <link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.2/css/jquery.dataTables.css">
+
+                <script>
+                        $(function(){
+                        
+                                $.ajax({
+                                    type: "POST",
+                                    url: "categorias"
+                                })
+                                .done(function(data) {
+                                    $("#categoriasDiv").html(data);
+                                });
+                            
+                                $.ajax({
+                                    type: "POST",
+                                    url: "contas"
+                                })
+                                .done(function(data) {
+                                    $("#contasDiv").html(data);
+                                });
+                        
+                        
+                                var tabela = $('#tabela').dataTable({"iDisplayLength": -1, "lengthMenu": [[-1, 25, 50, 100], ["Todos", 25, 50, 100]]});
+
+                                $('#tabela tbody').on('click', 'td.clicavel', function (e) {
+                                        e.preventDefault();
+                                        $(this).parent().find("a").removeClass("adicionarLancamento");
+                                        $(this).parent().find("a").addClass("atualizarLancamento");
+                                        $(this).parent().find("a").html("Atualizar");
+                                        
+                                        var name = $(this).text();
+                                        var index = parseInt($(this).attr("index"));
+                                        
+                                        if (index == 3)
+                                            $(this).html($("#categoriasDiv").html());
+                                        else if (index == 4)
+                                            $(this).html($("#contasDiv").html());
+                                        else if (index == 1)
+                                            $(this).html("<input index='" + index + "' type='date' class='editor' value='" + name + "'>");
+                                        else
+                                            $(this).html("<input index='" + index + "' type='text' class='editor' value='" + name + "'>");
+                                        $(this).removeClass("clicavel");
+                                } );
+
+//                                $("#tabela tbody").on('keypress', '.editor', function( event ) {
+//
+//                                        if ( event.which == 13 ) {
+//                                                $(this).parent().addClass("clicavel");
+//                                                $(this).parent().html($(this).val());
+//                                        }
+//                                });
+                            
+                                $("body").on("click", ".adicionarLancamento", function(e){
+                                    e.preventDefault();
+                                    var el = $("<tr><td><input type='date' class='editor' value=''></td><td><input type='text' class='editor' value=''></td><td><input type='text' class='editor' value=''></td><td><input type='text' class='editor' value=''></td><td><input type='number' class='editor' value=''></td><td><a href='#' class='salvarLancamento'>Salvar</a></td></tr>");
+                                    $(this).parent().parent().after(el);
+                                    el.find("td:nth-child(3)").html($("#categoriasDiv").html());
+                                    el.find("td:nth-child(4)").html($("#contasDiv").html());
+                                });
+                            
+                                $("body").on("click", ".salvarLancamento", function(e){
+                                    e.preventDefault();
+                                    var parametros = [];
+                                    var esteEle = $(this).parent();
+                                    $(this).parent().parent().find("input").each(function(){
+                                        parametros.push($(this).val());
+                                    });
+                                    $(this).parent().parent().find("select").each(function(){
+                                        parametros.push($(this).val());
+                                    });
+                                
+                                    $.ajax({
+                                            type: "POST",
+                                            url: "salvar",
+                                            data: { data: parametros[0], descricao: parametros[1], categoria: parametros[3], conta: parametros[4], valor: parametros[2] }
+                                        })
+                                        .done(function() {
+                                            esteEle.html("Salvo!");
+                                        });
+                                });
+                                
+                                $("body").on("click", ".atualizarLancamento", function(e){
+                                    e.preventDefault();
+                                    var parametros = {};
+                                    var lancamentoId = parseInt($(this).attr("lancamentoId"));
+                                    var este = $(this);
+                                    parametros.id = lancamentoId;
+                                    $(this).parent().parent().find("input").each(function(){
+                                        if ($(this).attr("index") == 1)
+                                            parametros.data = $(this).val();
+                                        else if ($(this).attr("index") == 2)
+                                            parametros.descricao = $(this).val();
+                                        else if ($(this).attr("index") == 5)
+                                            parametros.valor = $(this).val();
+                                        
+                                    });
+                                    $(this).parent().parent().find("select").each(function(){
+                                        if ($(this).attr("index") == 3)
+                                            parametros.categoria = $(this).val();
+                                        if ($(this).attr("index") == 4)
+                                            parametros.conta = $(this).val();
+                                    });
+                                    
+                                
+                                    $.ajax({
+                                            type: "POST",
+                                            url: "atualizar",
+                                            data: parametros
+                                        })
+                                        .done(function() {
+                                            //alert("Atualizado");
+                                        });
+                                });
+                                
+                                $(".filtro").click(function(){
+                                    $("tr[conta='" + $(this).attr("conta") + "']").hide();
+                                    $(this).hide();
+                                });
+                        });
+                </script>
+                </head>
+
+
+                <body>
+                    #foreach ($c in $contas)
+                    <button class="filtro" conta="$c.descricao">$c.descricao</button>
+                    #end
+
+                    <table id="tabela" class="display" cellspacing="0" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Conta</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+
+                        <tfoot>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Conta</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </tfoot>
+
+                        <tbody id="corpoTabela">
+                            #foreach($lancamento in $objeto)
+                            <tr conta="$lancamento.conta.descricao">
+                                <td class="clicavel" index="1">$lancamento.data</td>
+                                <td class="clicavel" index="2">$lancamento.descricao</td>
+                                <td class="clicavel" index="3">$lancamento.categoria.descricao</td>
+                                <td class="clicavel" index="4">$lancamento.conta.descricao</td>
+                                <td class="clicavel" index="5">$lancamento.valor</td>
+                                <td>
+                                    <a lancamentoId="$lancamento.id" class="adicionarLancamento" href="#">Novo</a>
+                                    <!--<a lancamentoId="$lancamento.id" class="atualizarLancamento" href="#">Atualizar</a>-->
+                                </td>
+                            </tr>
+                            #end
+                        </tbody>
+                    </table>
+
+
+                    <div id="categoriasDiv" style="display: none"></div>
+                    <div id="contasDiv" style="display: none"></div>
+
+                </body>
+
+
+                </html>

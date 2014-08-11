@@ -1,0 +1,110 @@
+<html>
+
+    <head>
+        <meta charset="utf-8">
+            <script src="../resources/js/jquery.js"></script>
+            <script src="../resources/js/tables.js"></script>
+            <link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.2/css/jquery.dataTables.css">
+
+                <script>
+                        $(function(){
+                                $('.tabela').dataTable({"iDisplayLength": -1, "lengthMenu": [[-1, 25, 50, 100], ["Todos", 25, 50, 100]]});
+                        });
+                </script>
+                </head>
+
+
+                <body>
+                    #foreach ($c in $contas)
+                    <button class="filtro" conta="$c.descricao">$c.descricao</button>
+                    #end
+                    
+                    <h1>Valores por conta no mês</h1>
+
+                    <table class="display tabela" cellspacing="0" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Conta</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+
+                        <tfoot>
+                            <tr>
+                                <th>Conta</th>
+                                <th>Valor</th>
+                            </tr>
+                        </tfoot>
+
+                        <tbody>
+                            #foreach($i in $mensal)
+                            <tr>
+                                <td>$i.get(1)</td>
+                                <td>$i.get(0)</td>
+                            </tr>
+                            #end
+                        </tbody>
+                    </table>
+                    
+                    
+                    <h1>Valores por conta próximo mês</h1>
+
+                    <table class="display tabela" cellspacing="0" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Conta</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+
+                        <tfoot>
+                            <tr>
+                                <th>Conta</th>
+                                <th>Valor</th>
+                            </tr>
+                        </tfoot>
+
+                        <tbody>
+                            #foreach($i in $proximoMensal)
+                            <tr>
+                                <td>$i.get(1)</td>
+                                <td>$i.get(0)</td>
+                            </tr>
+                            #end
+                        </tbody>
+                    </table>
+                    
+                    <h1>Total de receitas/despesas no cartão de crédito nos meses</h1>
+                    <table class="display tabela" cellspacing="0" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Ano/Mês</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+
+                        <tfoot>
+                            <tr>
+                                <th>Ano/Mês</th>
+                                <th>Valor</th>
+                            </tr>
+                        </tfoot>
+
+                        <tbody>
+                            #foreach($i in $cartao)
+                            <tr>
+                                <td>$i.get(1)</td>
+                                <td>$i.get(0)</td>
+                            </tr>
+                            #end
+                        </tbody>
+                    </table>
+
+
+                    <div id="categoriasDiv" style="display: none"></div>
+                    <div id="contasDiv" style="display: none"></div>
+
+                </body>
+
+
+                </html>

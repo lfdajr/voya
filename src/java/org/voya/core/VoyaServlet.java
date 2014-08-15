@@ -37,6 +37,7 @@ import org.apache.commons.beanutils.BeanUtils;
 /**
  * Highly productive programming framework for Java web development.
  * @author Lourival F. de Almeida Júnior
+ * @version 0.1.2
  */
 public class VoyaServlet extends HttpServlet {
     
@@ -156,12 +157,21 @@ public class VoyaServlet extends HttpServlet {
             //Neste if acontece a execução do método da classe passada como parâmetro
             if (tipo != null) 
             {
+                Object instancia = null;
+                
+                try
+                {
+                    Constructor c = classeController.getConstructor(HttpServletRequest.class, HttpServletResponse.class);
+                    instancia = c.newInstance(request, response);
+                }
+                catch (Exception e)
+                {
+                    instancia = classeController.newInstance();
+                }
 
                 if (tipo == MetodoSemParametro.class)
                 {
                     metodo = classeController.getMethod(parametros.metodo);
-
-                    Object instancia = classeController.newInstance();
                     Object retorno = metodo.invoke(instancia);
 
                     if (retorno != null)
@@ -170,8 +180,6 @@ public class VoyaServlet extends HttpServlet {
                 else if (tipo == HttpServletRequest.class)
                 {
                     metodo = classeController.getMethod(parametros.metodo, tipo);
-
-                    Object instancia = classeController.newInstance();
                     metodo.invoke(instancia, request);
                 }
                 else
@@ -179,18 +187,8 @@ public class VoyaServlet extends HttpServlet {
                     //metodo = classeController.getMethod(parametros.metodo, tipo, HttpServletRequest.class);
                     Object bean = tipo.newInstance();
                     BeanUtils.populate(bean, request.getParameterMap());
-                    Object instancia = null;
                     
                     metodo = classeController.getMethod(parametros.metodo, tipo);
-                    try
-                    {
-                        Constructor c = classeController.getConstructor(HttpServletRequest.class, HttpServletResponse.class);
-                        instancia = c.newInstance(request, response);
-                    }
-                    catch (Exception e)
-                    {
-                        instancia = classeController.newInstance();
-                    }
                     
                     Object retorno = metodo.invoke(instancia, bean);
 

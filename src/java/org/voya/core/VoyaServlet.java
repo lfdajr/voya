@@ -37,7 +37,7 @@ import org.apache.commons.beanutils.BeanUtils;
 /**
  * Highly productive programming framework for Java web development.
  * @author Lourival F. de Almeida Júnior
- * @version 0.1.2
+ * @version 0.1.3
  */
 public class VoyaServlet extends HttpServlet {
     
@@ -220,7 +220,7 @@ public class VoyaServlet extends HttpServlet {
         } 
         catch (Exception ex) 
         {
-            viewRetorno = "/WEB-INF/templates/" + parametros.metodo + ".vm";
+            viewRetorno = "/WEB-INF/templates/" + parametros.classe + "/" + parametros.metodo + ".vm";
         }
         finally
         {

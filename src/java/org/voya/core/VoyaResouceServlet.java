@@ -1,8 +1,9 @@
 package org.voya.core;
 
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
-public class VoyaResouceServlet extends org.apache.catalina.servlets.DefaultServlet {
+public class VoyaResouceServlet extends HttpServlet {
 
     protected String getRelativePath(HttpServletRequest request) {
         System.out.println("URI: " + request.getRequestURI());

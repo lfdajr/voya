@@ -24,8 +24,8 @@
         <servlet-name>VelocityView</servlet-name>
         <url-pattern>*.vm</url-pattern>
     </servlet-mapping>
-     <servlet-mapping>
-            <servlet-name>padrao</servlet-name>
+    <servlet-mapping>
+            <servlet-name>default</servlet-name>
             <url-pattern>/resources/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>

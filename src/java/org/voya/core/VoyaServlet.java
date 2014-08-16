@@ -22,7 +22,9 @@ RequestURL: http://localhost:8081/voya/teste/sair
 
 package org.voya.core;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -33,6 +35,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.beanutils.BeanUtils;
+import org.voya.core.security.LoginLogoutController;
+import org.voya.core.security.SecuredController;
+import org.voya.core.security.Usuario;
+
 
 /**
  * Highly productive programming framework for Java web development.
@@ -42,37 +48,35 @@ import org.apache.commons.beanutils.BeanUtils;
 public class VoyaServlet extends HttpServlet {
     
     private String pacoteClassesControle;
-    private String pacoteClassesView;
     
     //Contém os parâmetros dos métodos das classes de controles, onde as chaves 
     //são o nome do método: org.projeto.Controlado1.teste
     private HashMap<String, Class> parametrosMetodosClassesControllersMap;
-    
     private HashMap<String, Class> classesControllersMap;
-    private HashMap<String, Object> classesViewMap;
+    
+    private static Bootstrap bootstrap;
     
     @Override
     public void init() throws ServletException 
     {
         pacoteClassesControle = getServletConfig().getInitParameter("ControllerClassesPackage") + ".";
-        pacoteClassesView = getServletConfig().getInitParameter("ViewClassesPackage") + ".";
         parametrosMetodosClassesControllersMap = new HashMap<String, Class>();
         classesControllersMap = new HashMap<String, Class>();
-        classesViewMap = new HashMap<String, Object>();
         
+        classesControllersMap.put(Globals.CLASSE_LOGIN_LOGOUT_CONTROLLER, LoginLogoutController.class);
+        parametrosMetodosClassesControllersMap.put(Globals.CLASSE_LOGIN_LOGOUT_CONTROLLER + ".login", HttpServletRequest.class);
+        parametrosMetodosClassesControllersMap.put(Globals.CLASSE_LOGIN_LOGOUT_CONTROLLER + ".loginDo", HttpServletRequest.class);
+        parametrosMetodosClassesControllersMap.put(Globals.CLASSE_LOGIN_LOGOUT_CONTROLLER + ".logout", HttpServletRequest.class);
         
         try {
             //Buscando uma classe org.voya.bootstrap.BootstrapImpl.class
             //Que deve ser colocada na aplicação cliente
             Class boot = Class.forName("org.voya.bootstrap.BootstrapImpl");
-            Bootstrap bootstrap = (Bootstrap) boot.newInstance();
+            bootstrap = (Bootstrap) boot.newInstance();
             bootstrap.inicializar();
             bootstrap.inicializarConverters();
         } 
         catch (Exception ex) {
-            Bootstrap bootstrap = new Bootstrap();
-            bootstrap.inicializar();
-            bootstrap.inicializarConverters();
             Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Nenhuma classe bootstrap para ser inicializada", ex);
         }
         
@@ -91,24 +95,8 @@ public class VoyaServlet extends HttpServlet {
         if (parametros.length == 4)
         {
             p = new Parametros(parametros[2], parametros[3], pacoteClassesControle);
-            pv = new Parametros(parametros[2], parametros[3], pacoteClassesView);
             
             Class classeController = classesControllersMap.get(p.classeCompleto);
-            Object classeView = null;
-            
-            try
-            {
-                classeView = classesViewMap.get(pv.classeCompleto);
-                if (classeView == null)
-                {
-                    classeView = Class.forName(pv.classeCompleto).newInstance();
-                    classesViewMap.put(pv.classeCompleto, classeView);
-                }
-            }
-            catch (Exception ex)
-            {
-                //Não é para fazer nada se não tiver um view definido
-            }
             
             if (classeController == null)
             {
@@ -133,17 +121,29 @@ public class VoyaServlet extends HttpServlet {
                     }
                 }
             }
+            return p;
         }
-        return p;
+        else
+        {
+            p = new Parametros("LoginLogoutController", parametros[parametros.length - 1], "org.voya.core.security.");
+            return p;
+        }
+        
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws Exception
     {
         response.setContentType("text/html;charset=UTF-8");
+        boolean permitidoExecucao = true;
+        String viewRetorno = null;
         
         //Processando metodos para acelerar buscar posteriores
-        Parametros parametros = inicializarMaps(request.getRequestURI());
+        Parametros parametros = null;
+        try {
+            parametros = inicializarMaps(request.getRequestURI());
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         try 
         {
@@ -168,21 +168,29 @@ public class VoyaServlet extends HttpServlet {
                 {
                     instancia = classeController.newInstance();
                 }
+                
+                //Se o controller é do tipo seguro efetuar o controle de acesso
+                if (instancia instanceof SecuredController)
+                {
+                    Usuario usuarioSessao = (Usuario) request.getSession().getAttribute(Globals.SESSAO_USUARIO);
+                    
+                    if (usuarioSessao != null)
+                        permitidoExecucao = ((SecuredController)instancia).acessoPermitido(usuarioSessao, parametros.metodo);
+                    else
+                        permitidoExecucao = false;
+                }
 
-                if (tipo == MetodoSemParametro.class)
+                if (tipo == MetodoSemParametro.class && permitidoExecucao)
                 {
                     metodo = classeController.getMethod(parametros.metodo);
-                    Object retorno = metodo.invoke(instancia);
-
-                    if (retorno != null)
-                        request.setAttribute("objeto", retorno);
+                    viewRetorno = (String) metodo.invoke(instancia);
                 }
-                else if (tipo == HttpServletRequest.class)
+                else if (tipo == HttpServletRequest.class && permitidoExecucao)
                 {
                     metodo = classeController.getMethod(parametros.metodo, tipo);
-                    metodo.invoke(instancia, request);
+                    viewRetorno = (String) metodo.invoke(instancia, request);
                 }
-                else
+                else if (permitidoExecucao)
                 {
                     //metodo = classeController.getMethod(parametros.metodo, tipo, HttpServletRequest.class);
                     Object bean = tipo.newInstance();
@@ -190,42 +198,73 @@ public class VoyaServlet extends HttpServlet {
                     
                     metodo = classeController.getMethod(parametros.metodo, tipo);
                     
-                    Object retorno = metodo.invoke(instancia, bean);
-
-                    if (retorno != null)
-                        request.setAttribute("objeto", retorno);
+                    viewRetorno = (String) metodo.invoke(instancia, bean);
+                }
+                else if (!permitidoExecucao)
+                {
+                    viewRetorno = "redirect:" + request.getContextPath() + "/login";
+                    Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Acesso não permitido: " + request.getRequestURI(), viewRetorno);
                 }
             }
             else
-                throw new Exception("Método passado -" + parametros.metodo + "- não existe no controller " + parametros.classeCompleto);
+                Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Método passado -" + parametros.metodo + "- não existe no controller " + parametros.classeCompleto, "");
         }
         catch (NoSuchMethodException ex) 
         {
-            throw new Exception("Método passado -" + parametros.metodo + "- não existe no controller " + parametros.classeCompleto);
-        }
-        catch (Exception ex) 
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Método passado -" + parametros.metodo + "- não existe no controller " + parametros.classeCompleto, "");
+        } 
+        catch (IllegalAccessException ex) 
+        {
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, null, ex);
+        } 
+        catch (IllegalArgumentException ex) 
+        {
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, null, ex);
+        } 
+        catch (InvocationTargetException ex) 
+        {
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, null, ex);
+        } 
+        /*catch (Exception ex) 
         {
             ex.printStackTrace();
             throw new Exception("erro geral");
-        }
-
-        //Se tiver algum problema em não ter view, retorna para a view
-        //correspondente ao template cujo nome é o nome do método
-        String viewRetorno = null;
-        try
-        {
-            Object instanciaView = classesViewMap.get(pacoteClassesView + parametros.classe);
-            Method mView = instanciaView.getClass().getMethod(parametros.metodo, HttpServletRequest.class, HttpServletResponse.class);
-            viewRetorno = (String) mView.invoke(instanciaView, request, response);
-        } 
-        catch (Exception ex) 
-        {
+        }*/
+        
+        if (viewRetorno == null)
             viewRetorno = "/WEB-INF/templates/" + parametros.classe + "/" + parametros.metodo + ".vm";
-        }
-        finally
+        
+        RequestDispatcher nextView = request.getRequestDispatcher(viewRetorno);
+        
+        if (viewRetorno.startsWith("redirect:"))
         {
-            RequestDispatcher nextView = request.getRequestDispatcher(viewRetorno);
-            nextView.forward(request,response);
+            viewRetorno = viewRetorno.replace("redirect:", "");
+            try 
+            {
+                response.sendRedirect(viewRetorno);
+                //nextView.include(request, response);
+            } 
+            catch (IOException ex) 
+            {
+                Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Recurso não encontrado: " + viewRetorno, ex);
+            }
+        }
+        else
+        {
+            try 
+            {
+                nextView.forward(request, response);
+            } 
+            catch (ServletException ex) 
+            {
+                Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, null, ex);
+            } 
+            catch (IOException ex) 
+            {
+                Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Recurso não encontrado: " + viewRetorno, ex);
+            }
         }
     }
 
@@ -251,7 +290,12 @@ public class VoyaServlet extends HttpServlet {
 
     @Override
     public String getServletInfo() {
-        return "Short description";
+        return "Voya Servlet";
+    }
+    
+    public static Bootstrap getBootstrap()
+    {
+        return bootstrap;
     }
 }
 

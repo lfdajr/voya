@@ -8,22 +8,32 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.voya.core.EMUtil;
+import org.voya.core.security.SecuredController;
 import org.voya.exemplo.dominio.Conta;
 
-public class Lancamento {
+public class Lancamento implements SecuredController
+{
+    private HttpServletRequest request;
+    private HttpServletResponse response;
     
-    public void index(HttpServletRequest req) throws Exception
+    public Lancamento(HttpServletRequest req, HttpServletResponse res)
+    {
+        this.request = req;
+        this.response = res;
+    }
+    
+    public String index(HttpServletRequest req) throws Exception
     {
         req.setAttribute("objeto", org.voya.exemplo.dominio.Lancamento.findAll());
         req.setAttribute("contas", Conta.findAll());
         
-        
+        return "/WEB-INF/templates/index.vm";
     }
     
-    public void analitico(HttpServletRequest req) throws Exception
+    public String analitico(HttpServletRequest req) throws Exception
     {
-        
         EntityManager em = EMUtil.getEntityManager();
         EntityTransaction tx = null;
         List retorno = null, retorno2 = null, retorno3 = null;
@@ -71,12 +81,11 @@ public class Lancamento {
         req.setAttribute("cartao", retorno);
         req.setAttribute("mensal", retorno2);
         req.setAttribute("proximoMensal", retorno3);
-
         
-        
+        return "/WEB-INF/templates/analitico.vm";
     }
     
-    public void atualizar(org.voya.exemplo.dominio.Lancamento l) throws Exception
+    public String atualizar(org.voya.exemplo.dominio.Lancamento l) throws Exception
     {
         org.voya.exemplo.dominio.Lancamento lanc = org.voya.exemplo.dominio.Lancamento.findById(l.getId());
         if (l.getData() == null)
@@ -91,23 +100,32 @@ public class Lancamento {
             l.setValor(lanc.getValor());        
         
         l.update();
+        return "";
     }
     
-    public void salvar(org.voya.exemplo.dominio.Lancamento l) throws Exception
+    public String salvar(org.voya.exemplo.dominio.Lancamento l) throws Exception
     {
         l.save();
+        return "";
     }
     
-    public List categorias() throws Exception
+    public String categorias() throws Exception
     {
         List<org.voya.exemplo.dominio.Categoria> lista = org.voya.exemplo.dominio.Categoria.findAll();
-        return lista;
+        request.setAttribute("objeto", lista);
+        return "/WEB-INF/templates/categorias.vm";
     }
     
-    public List contas() throws Exception
+    public String contas() throws Exception
     {
         List<org.voya.exemplo.dominio.Conta> lista = org.voya.exemplo.dominio.Conta.findAll();
-        return lista;
+        request.setAttribute("objeto", lista);
+        return "/WEB-INF/templates/contas.vm";
     }    
+
+    @Override
+    public boolean acessoPermitido(org.voya.core.security.Usuario usuario, String metodo) {
+        return usuario.getPerfil().contains("manager");
+    }
     
 }

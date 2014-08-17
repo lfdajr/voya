@@ -41,17 +41,18 @@ class ExampleController
   }
 
 
-  public MyBean method(MyBean b)
+  public String method(MyBean b)
   {
     ...
     request.setAttribute("myVar", "<h2>Any text or object can go here</h2>");
-    return b;
+    request.setAttribute("object", b);
+    return "WEB-INF/templates/method.vm";
   }
 }
 
 ```
 
-Once the controller is done, a view with the same name (method.vm) is searched in the /templates dir. Whatever you return from method gets to the view as "object" variable. Voya uses Apache Velocity as the template engine for the view. So, in method.vm you'll have:
+Once the controller is done, a view with the same name (method.vm) is searched in the /templates dir. Whatever you put in the request gets to the view (templates). Voya uses Apache Velocity as the template engine for the view. So, in method.vm you'll have:
 
 ```
 <html>

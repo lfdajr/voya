@@ -5,9 +5,10 @@
     <class>org.voya.exemplo.dominio.Categoria</class>
     <class>org.voya.exemplo.dominio.Lancamento</class>
     <class>org.voya.exemplo.dominio.Conta</class>
+    <class>org.voya.exemplo.dominio.Usuario</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
-<!--      <property name="hibernate.connection.username" value="miniversity23"/>
+      <!--      <property name="hibernate.connection.username" value="miniversity23"/>
       <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
       <property name="hibernate.connection.password" value="LJ27TyBzZ089q"/>
       <property name="hibernate.connection.url" value="jdbc:mysql://127.0.0.1:8080/miniversity23?autoReconnect=true"/>
@@ -15,10 +16,9 @@
       <property name="hibernate.format_sql" value="true"/>
       <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>-->
       <property name="hibernate.connection.datasource" value="java:comp/env/jdbc/financeiro"/>
-            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLInnoDBDialect"/>
-            <property name="hibernate.show_sql" value="false"/>
-            <property name="hibernate.format_sql" value="false"/>
-
+      <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLInnoDBDialect"/>
+      <property name="hibernate.show_sql" value="false"/>
+      <property name="hibernate.format_sql" value="false"/>
     </properties>
   </persistence-unit>
 </persistence>

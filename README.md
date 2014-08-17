@@ -52,7 +52,7 @@ class ExampleController
 
 ```
 
-Once the controller is done, a view with the same name (method.vm) is searched in the /templates dir. Whatever you put in the request gets to the view (templates). Voya uses Apache Velocity as the template engine for the view. So, in method.vm you'll have:
+Once the controller is done, you can redirect the flow to the next view. Whatever you put in the request gets to the view (templates). Voya uses Apache Velocity as the template engine. So, in method.vm you'll have:
 
 ```
 <html>

@@ -11,9 +11,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.voya.core.EMUtil;
 import org.voya.core.security.SecuredController;
+import org.voya.core.validator.ValidatedController;
+import org.voya.core.validator.Validator;
 import org.voya.exemplo.dominio.Conta;
 
-public class Lancamento implements SecuredController
+public class Lancamento implements SecuredController, ValidatedController
 {
     private HttpServletRequest request;
     private HttpServletResponse response;
@@ -127,5 +129,17 @@ public class Lancamento implements SecuredController
     public boolean acessoPermitido(org.voya.core.security.Usuario usuario, String metodo) {
         return usuario.getPerfil().contains("manager");
     }
-    
+
+    @Override
+    public String validate(Validator valida, String metodo) 
+    {
+        if (metodo.equals("atualizar"))
+        {
+            valida.required("data");
+            valida.date("data", "dd/MM/YYYY");
+            //return "/WEB-INF/templates/contas.vm";
+        }
+        
+        return null;
+    }
 }

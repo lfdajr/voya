@@ -35,9 +35,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.ConversionException;
 import org.voya.core.security.LoginLogoutController;
 import org.voya.core.security.SecuredController;
 import org.voya.core.security.Usuario;
+import org.voya.core.validator.ValidatedController;
+import org.voya.core.validator.ValidationException;
+import org.voya.core.validator.Validator;
 
 
 /**
@@ -179,6 +183,17 @@ public class VoyaServlet extends HttpServlet {
                     else
                         permitidoExecucao = false;
                 }
+                
+                if (instancia instanceof ValidatedController)
+                {
+                    Validator validador = new Validator(request);
+                    viewRetorno = ((ValidatedController)instancia).validate(validador, parametros.metodo);
+                    if (validador.hasErrors())
+                    {
+                        request.setAttribute(Globals.ERROR_VAR, validador.getErrors());
+                        throw new ValidationException();
+                    }
+                }
 
                 if (tipo == MetodoSemParametro.class && permitidoExecucao)
                 {
@@ -208,6 +223,14 @@ public class VoyaServlet extends HttpServlet {
             }
             else
                 Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Método passado -" + parametros.metodo + "- não existe no controller " + parametros.classeCompleto, "");
+        }
+        catch (ValidationException ex)
+        {
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Erro de validação", "");
+        }
+        catch (ConversionException ex)
+        {
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Problema na conversão de valores", "");
         }
         catch (NoSuchMethodException ex) 
         {

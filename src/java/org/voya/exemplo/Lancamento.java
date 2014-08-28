@@ -2,6 +2,8 @@
 package org.voya.exemplo;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
@@ -10,12 +12,13 @@ import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.voya.core.EMUtil;
+import org.voya.core.FileUploadUtil;
 import org.voya.core.security.SecuredController;
 import org.voya.core.validator.ValidatedController;
 import org.voya.core.validator.Validator;
 import org.voya.exemplo.dominio.Conta;
 
-public class Lancamento implements SecuredController, ValidatedController
+public class Lancamento implements ValidatedController
 {
     private HttpServletRequest request;
     private HttpServletResponse response;
@@ -125,9 +128,10 @@ public class Lancamento implements SecuredController, ValidatedController
         return "/WEB-INF/templates/contas.vm";
     }    
 
-    @Override
+    //@Override
     public boolean acessoPermitido(org.voya.core.security.Usuario usuario, String metodo) {
-        return usuario.getPerfil().contains("manager");
+        return true;
+        //return usuario.getPerfil().contains("manager");
     }
 
     @Override
@@ -141,5 +145,20 @@ public class Lancamento implements SecuredController, ValidatedController
         }
         
         return null;
+    }
+    
+    public String upload()
+    {
+        try 
+        {
+            String fileName = request.getPart("upfile").getName();
+            FileUploadUtil.processarUpload(request, "/home/99282895491/projetos/voya/build/" + fileName, 1000000);
+        } 
+        catch (Exception ex) 
+        {
+            ex.printStackTrace();
+        }
+        
+        return "";
     }
 }

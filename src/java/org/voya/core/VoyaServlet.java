@@ -36,6 +36,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.ConversionException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.voya.core.security.LoginLogoutController;
 import org.voya.core.security.SecuredController;
 import org.voya.core.security.Usuario;
@@ -59,6 +61,7 @@ public class VoyaServlet extends HttpServlet {
     private HashMap<String, Class> classesControllersMap;
     
     private static Bootstrap bootstrap;
+    protected static ServletFileUpload upload;
     
     @Override
     public void init() throws ServletException 
@@ -84,6 +87,10 @@ public class VoyaServlet extends HttpServlet {
             Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Nenhuma classe bootstrap para ser inicializada", ex);
         }
         
+        
+        //Processando forma de upload
+        DiskFileItemFactory factory = new DiskFileItemFactory();
+        upload = new ServletFileUpload(factory);
     }
     
     /*

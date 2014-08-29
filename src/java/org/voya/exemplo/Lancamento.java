@@ -1,9 +1,9 @@
 //controlador
 package org.voya.exemplo;
 
+import java.io.File;
+import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
@@ -11,9 +11,9 @@ import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.fileupload.FileItem;
 import org.voya.core.EMUtil;
 import org.voya.core.FileUploadUtil;
-import org.voya.core.security.SecuredController;
 import org.voya.core.validator.ValidatedController;
 import org.voya.core.validator.Validator;
 import org.voya.exemplo.dominio.Conta;
@@ -151,8 +151,10 @@ public class Lancamento implements ValidatedController
     {
         try 
         {
-            String fileName = request.getPart("upfile").getName();
-            FileUploadUtil.processarUpload(request, "/home/99282895491/projetos/voya/build/" + fileName, 1000000);
+            HashMap parametros = FileUploadUtil.processarParametros(request);
+            FileItem arquivo = (FileItem) parametros.get("upfile");
+            File uploadedFile = new File("/home/99282895491/projetos/voya/build/" + arquivo.getName());
+            arquivo.write(uploadedFile);
         } 
         catch (Exception ex) 
         {

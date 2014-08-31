@@ -8,10 +8,14 @@ import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.PersistenceException;
-import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileItem;
+import org.hibernate.Hibernate;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.ejb.HibernateEntityManager;
 import org.voya.core.EMUtil;
 import org.voya.core.FileUploadUtil;
 import org.voya.core.validator.ValidatedController;
@@ -40,23 +44,25 @@ public class Lancamento implements ValidatedController
     public String analitico(HttpServletRequest req) throws Exception
     {
         EntityManager em = EMUtil.getEntityManager();
-        EntityTransaction tx = null;
+        HibernateEntityManager hem = em.unwrap(HibernateEntityManager.class);
+        Session session = hem.getSession();
+        Transaction tx = null;
         List retorno = null, retorno2 = null, retorno3 = null;
         try
         {
-            tx = em.getTransaction();
-            tx.begin();
+            tx = session.beginTransaction();
             //seleciona para a conta 9 - cartão de crédito, todos os somatórios por mês
-            Query q = em.createNativeQuery("SELECT SUM(VALOR), CONCAT(YEAR(DATA), '-', LPAD(MONTH(DATA),2,'0')) AS DATAANO FROM LANCAMENTO WHERE CONTA_ID = 9 GROUP BY DATAANO");
-            retorno = q.getResultList();
+            Query q = session.createSQLQuery("SELECT SUM(VALOR) AS VALOR, CONCAT(YEAR(DATA), '-', LPAD(MONTH(DATA),2,'0')) AS DATAANO FROM LANCAMENTO WHERE CONTA_ID = 9 GROUP BY DATAANO")
+                    .addScalar("VALOR", Hibernate.BIG_DECIMAL)
+                    .addScalar("DATAANO", Hibernate.STRING);
+            retorno = q.list();
             
             //Somatório dos valores para cada conta no mês
-            q = em.createNativeQuery("SELECT SUM(L.VALOR) AS SOMATORIO, C.DESCRICAO FROM LANCAMENTO L, CONTA C WHERE C.ID = L.CONTA_ID AND MONTH(L.DATA) <= MONTH(NOW()) AND YEAR(L.DATA) <= YEAR(NOW()) GROUP BY CONTA_ID");
-            retorno2 = q.getResultList();
+            q = session.createSQLQuery("SELECT SUM(L.VALOR) AS SOMATORIO, C.DESCRICAO FROM LANCAMENTO L, CONTA C WHERE C.ID = L.CONTA_ID AND MONTH(L.DATA) <= MONTH(NOW()) AND YEAR(L.DATA) <= YEAR(NOW()) GROUP BY CONTA_ID");
+            retorno2 = q.list();
             
-            q = em.createNativeQuery("SELECT SUM(L.VALOR) AS SOMATORIO, C.DESCRICAO FROM LANCAMENTO L, CONTA C WHERE C.ID = L.CONTA_ID AND MONTH(L.DATA) <= MONTH(NOW() + interval 1 month) AND YEAR(L.DATA) <= YEAR(NOW() + interval 1 month) GROUP BY CONTA_ID");
-            retorno3 = q.getResultList();
-            
+            q = session.createSQLQuery("SELECT SUM(L.VALOR) AS SOMATORIO, C.DESCRICAO FROM LANCAMENTO L, CONTA C WHERE C.ID = L.CONTA_ID AND MONTH(L.DATA) <= MONTH(NOW() + interval 1 month) AND YEAR(L.DATA) <= YEAR(NOW() + interval 1 month) GROUP BY CONTA_ID");
+            retorno3 = q.list();
             
             tx.commit();
         }
@@ -105,13 +111,13 @@ public class Lancamento implements ValidatedController
             l.setValor(lanc.getValor());        
         
         l.update();
-        return "";
+        return "/WEB-INF/templates/blank.vm";
     }
     
     public String salvar(org.voya.exemplo.dominio.Lancamento l) throws Exception
     {
         l.save();
-        return "";
+        return "/WEB-INF/templates/blank.vm";
     }
     
     public String categorias() throws Exception
@@ -137,14 +143,14 @@ public class Lancamento implements ValidatedController
     @Override
     public String validate(Validator valida, String metodo) 
     {
-        if (metodo.equals("atualizar"))
-        {
-            valida.required("data");
-            valida.date("data", "dd/MM/YYYY");
-            //return "/WEB-INF/templates/contas.vm";
-        }
+//        if (metodo.equals("atualizar"))
+//        {
+//            //valida.required("data");
+//            //valida.date("data", "dd/MM/YYYY");
+//            return "/WEB-INF/templates/contas.vm";
+//        }
         
-        return null;
+        return "/WEB-INF/templates/blank.vm";
     }
     
     public String upload()

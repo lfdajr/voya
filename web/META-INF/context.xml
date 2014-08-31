@@ -2,7 +2,15 @@
 <Context antiJARLocking="true" path="/voya">
     <Resource name="jdbc/financeiro" auth="Container" type="javax.sql.DataSource"
         maxActive="5" maxIdle="5" maxWait="15000"
+        username="miniversity23" password="LJ27TyBzZ089q" driverClassName="com.mysql.jdbc.Driver"
+        validationQuery="select current_date" removeAbandoned="true" removeAbandonedTimeout="30" logAbandoned="true"
+        url="jdbc:mysql://mysql03.mais4.com.br/miniversity23?autoReconnect=true"/>
+</Context>
+
+<!--<Context antiJARLocking="true" path="/voya">
+    <Resource name="jdbc/financeiro" auth="Container" type="javax.sql.DataSource"
+        maxActive="5" maxIdle="5" maxWait="15000"
         username="root" password="root" driverClassName="com.mysql.jdbc.Driver"
         validationQuery="select current_date" removeAbandoned="true" removeAbandonedTimeout="30" logAbandoned="true"
         url="jdbc:mysql://127.0.0.1:3306/financeiro?autoReconnect=true"/>
-</Context>
+</Context>-->

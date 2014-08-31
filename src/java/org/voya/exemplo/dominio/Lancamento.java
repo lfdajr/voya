@@ -20,6 +20,7 @@ import org.voya.core.ClasseDominio;
 
 @Entity
 @Table(name = "LANCAMENTO")
+
 public class Lancamento extends ClasseDominio implements Serializable {
     
     private static final long serialVersionUID = 1L;

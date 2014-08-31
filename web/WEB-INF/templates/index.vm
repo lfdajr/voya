@@ -114,7 +114,8 @@
                                             data: parametros
                                         })
                                         .done(function() {
-                                            //alert("Atualizado");
+                                            //alert("ok");
+                                            este.parent().html("OK!");
                                         });
                                 });
                                 

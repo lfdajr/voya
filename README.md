@@ -24,7 +24,7 @@ The url are mapped over conventions.
         <servlet-class>org.voya.core.VoyaServlet</servlet-class>
         <init-param>
             <param-name>ControllerClassesPackage</param-name>
-            <param-value>org.voya.exemplo</param-value>
+            <param-value>org.voya.example</param-value> <!-- Tells the framework where to find the controller classes -->
         </init-param>
     </servlet>
     

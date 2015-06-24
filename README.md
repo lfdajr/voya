@@ -11,6 +11,48 @@ Get Started!
 Use the VoyaServlet in the web.xml configuration file and you're good to go.
 The url are mapped over conventions. 
 
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+    <servlet>
+        <servlet-name>VelocityView</servlet-name>
+        <servlet-class>org.apache.velocity.tools.view.VelocityViewServlet</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>VoyaServlet</servlet-name>
+        <servlet-class>org.voya.core.VoyaServlet</servlet-class>
+        <init-param>
+            <param-name>ControllerClassesPackage</param-name>
+            <param-value>org.voya.exemplo</param-value>
+        </init-param>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>VelocityView</servlet-name>
+        <url-pattern>*.vm</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+            <servlet-name>default</servlet-name>
+            <url-pattern>/resources/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>VoyaServlet</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>    
+    
+    <session-config>
+        <session-timeout>
+            30
+        </session-timeout>
+    </session-config>
+</web-app>
+```
+
+
+
 <domain>/ExampleController/method?name=john&year=1...
 This url maps to a controller class method.
 

@@ -6,6 +6,32 @@
         <target name="-post-dist">
             <property name="version" value="0.1"/>
             <buildnumber file="mybuild.number"/>
-            <jar destfile="dist/voya-${version}.${build.number}.jar" basedir="${build.classes.dir}" excludes="**/Test.class"/>
+<!--            <copy todir="temp001/nbproject">
+                <fileset dir="nbproject"/>
+            </copy>-->
+            <copy todir="temp001">
+                <fileset dir="src"/>
+            </copy>
+<!--            <copy todir="temp001/web">            
+                <fileset dir="web"/>
+            </copy>-->
+<!--            <copy todir="temp001/lib">
+                <fileset dir="lib"/>
+            </copy>-->
+            <copy file="build.xml" tofile="temp001/build.xml"/>
+            <copy file="mybuild.number" tofile="temp001/mybuild.number"/>
+            
+            <jar destfile="dist/voya-${version}.${build.number}.jar">
+                <fileset dir="${build.classes.dir}" excludes="**/persistence.xml"/>
+                <!--<fileset dir="${build.dir}/web/WEB-INF/lib"/>-->
+            </jar>
+            
+<!--            <zip destfile="dist/voya-src-${version}.${build.number}.zip">
+               <fileset dir="temp001"/>
+             </zip>-->
+            
+            <jar destfile="dist/voya-src-${version}.${build.number}.jar">
+                <fileset dir="temp001"/>
+            </jar>
         </target>
 </project>

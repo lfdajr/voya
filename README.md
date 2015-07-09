@@ -24,13 +24,23 @@ The url are mapped over conventions.
         <servlet-class>org.voya.core.VoyaServlet</servlet-class>
         <init-param>
             <param-name>ControllerClassesPackage</param-name>
-            <param-value>org.voya.example</param-value> <!-- Tells the framework where to find the controller classes -->
+            <param-value>assistente.controle</param-value>
         </init-param>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>VoyaJsonServlet</servlet-name>
+        <servlet-class>org.voya.core.VoyaJsonServlet</servlet-class>
     </servlet>
     
     <servlet-mapping>
         <servlet-name>VelocityView</servlet-name>
         <url-pattern>*.vm</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>VoyaJsonServlet</servlet-name>
+        <url-pattern>*.json</url-pattern>
     </servlet-mapping>
     
     <servlet-mapping>
@@ -51,7 +61,7 @@ The url are mapped over conventions.
 </web-app>
 ```
 
-
+VoyaServlet is the main servlet, VelocityViewServlet gets the templates processing tasks and the VoyaJsonServlet is responsible for returning objects as json to the browser.
 
 <domain>/ExampleController/method?name=john&year=1...
 This url maps to a controller class method.
@@ -107,3 +117,4 @@ Once the controller is done, you can redirect the flow to the next view. Whateve
 ```
 
 This is it! Any variables you pass to the request can also be accessed from the template.
+

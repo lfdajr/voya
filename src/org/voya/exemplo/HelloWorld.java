@@ -40,8 +40,8 @@ public class HelloWorld implements ValidatedController
     {
         if (metodo.equals("atualizar"))
         {
-            valida.required("data");
-            valida.date("data", "dd/MM/YYYY");
+            valida.required("data", "ERRO1");
+            valida.date("data", "dd/MM/YYYY", "ERRO2");
             //return "/WEB-INF/templates/contas.vm";
         }
         

@@ -1,0 +1,128 @@
+1. Criar classe de usuário que implemente a interface org.voya.core.security.Usuario
+No banco o framework procurará por uma coluna LOGIN e SENHA para fazer as verificações.
+
+1.1. Esta classe deve criar um namedquery conforme modelo abaixo:
+
+@NamedQueries({
+    @NamedQuery(name = "usuarioLogin", query = "from Usuario where email = :login and senha = SHA1(:senha)")
+})
+
+Deve ser respeitado o nome "usuarioLogin" e os parâmetros login e senha. Essa será a query utilizada para logar.
+
+
+2. Crie uma classe chamada org.voya.config.BootstrapImpl que estende org.voya.core.Bootstrap
+Essa classe contém informações iniciais para o framework. Nela está contido o método getClassUsuario() que você deverá retornar
+a classe que representa seu usuário criado no passo 1.
+
+
+3. Crie o arquivo WEB-INF/templates/login.vm
+O framework procurará este template que conterá a página inicial de login do sistema.
+Não esquecer que os campos devem ter a propriedade name iguais a "login" e "senha".
+
+
+
+4. Em org.voya.config.BootstrapImpl na sua aplicação, retorne o caminho para um template que será a primeira página após
+o login com sucesso. Segue exemplo abaixo
+
+public String getFirstPage() {
+        return "Agenda/index";
+    }    
+
+Após a execução deste método o framework irá chamar o método index no controller AgendaController.
+Sugerimos que este controller implemente a interface org.voya.core.security.SecuredController, que será chamada primeiro
+antes de qualquer chamada para garantir que temos usuário logado na aplicação para utilizar os controles pós login.
+
+Se o controller implementar esta interface, o sistema garantirá que para ser executada deve ter usuário logado e passará
+a chamada para o método acessoPermitido() na sua classe. Você pode simplesmente retornar true para permitir o acesso,
+ou criar lógicas de negócio de segundo nível para controlar o acesso a este controlador.
+
+acessoPermitido recebe dois parâmetros. O primeiro é o usuário logado e o segundo o método que está sendo invocado pelo usuário.
+
+
+
+
+ANEXO I - Exemplo de WEB.XML
+===============================
+
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+    <servlet>
+        <servlet-name>VelocityView</servlet-name>
+        <servlet-class>org.apache.velocity.tools.view.VelocityViewServlet</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>VoyaServlet</servlet-name>
+        <servlet-class>org.voya.core.VoyaServlet</servlet-class>
+        <init-param>
+            <param-name>ControllerClassesPackage</param-name>
+            <param-value>agenda.controle</param-value>
+        </init-param>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>VoyaJsonServlet</servlet-name>
+        <servlet-class>org.voya.core.VoyaJsonServlet</servlet-class>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>VelocityView</servlet-name>
+        <url-pattern>*.vm</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>VoyaJsonServlet</servlet-name>
+        <url-pattern>*.json</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+            <servlet-name>default</servlet-name>
+            <url-pattern>/resources/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>VoyaServlet</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>    
+    
+    <session-config>
+        <session-timeout>
+            30
+        </session-timeout>
+    </session-config>
+</web-app>
+
+
+
+
+
+
+
+ANEXO II - Exemplo de PERSISTENCE.XML
+=======================================
+
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+  <persistence-unit name="PersistenceUnit" transaction-type="RESOURCE_LOCAL">
+    <provider>org.hibernate.ejb.HibernatePersistence</provider>
+    <class>agenda.dominio.Agenda</class>
+    <class>agenda.dominio.Evento</class>
+    <class>agenda.dominio.Organizacao</class>
+    <class>agenda.dominio.Usuario</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    <properties>
+      <property name="hibernate.connection.username" value="root"/>
+      <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
+      <property name="hibernate.connection.password" value="root"/>
+      <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/agenda"/>
+      <property name="hibernate.show_sql" value="true"/>
+      <property name="hibernate.format_sql" value="true"/>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
+      <!--<property name="hibernate.connection.datasource" value="java:comp/env/jdbc/financeiro"/>-->
+      <!--<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLInnoDBDialect"/>-->
+      <!--<property name="hibernate.show_sql" value="false"/>-->
+      <!--<property name="hibernate.format_sql" value="false"/>-->
+    </properties>
+  </persistence-unit>
+</persistence>
+

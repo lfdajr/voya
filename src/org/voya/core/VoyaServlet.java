@@ -27,6 +27,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.RequestDispatcher;
@@ -62,6 +63,8 @@ public class VoyaServlet extends HttpServlet {
     
     private static Bootstrap bootstrap;
     protected static ServletFileUpload upload;
+    private Properties appMensagens;
+    
     
     @Override
     public void init() throws ServletException 
@@ -91,6 +94,19 @@ public class VoyaServlet extends HttpServlet {
         //Processando forma de upload
         DiskFileItemFactory factory = new DiskFileItemFactory();
         upload = new ServletFileUpload(factory);
+        
+        
+        //Processando arquivo de mensagens
+        appMensagens = new Properties();
+        try 
+        {
+            appMensagens.load(getServletContext().getResourceAsStream("/WEB-INF/resources.properties"));
+        } 
+        catch (IOException ex) 
+        {
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Não foi possível carregar o arquivo de mensagens WEB-INF/resources.properties", ex);
+        }
+        
     }
     
     /*
@@ -193,12 +209,13 @@ public class VoyaServlet extends HttpServlet {
                 
                 if (instancia instanceof ValidatedController)
                 {
-                    Validator validador = new Validator(request);
+                    Validator validador = new Validator(request, appMensagens);
                     viewRetorno = ((ValidatedController)instancia).validate(validador, parametros.metodo);
                     if (validador.hasErrors())
                     {
                         request.setAttribute(Globals.ERROR_VAR, validador.getErrors());
-                        throw new ValidationException();
+                        //permitidoExecucao = false;
+                        throw new ValidationException(validador);
                     }
                 }
 
@@ -234,15 +251,15 @@ public class VoyaServlet extends HttpServlet {
         }
         catch (ValidationException ex)
         {
-            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Erro de validação", "");
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.WARNING, "Erro de validação - " + ex.getValidador().getErrors().toString(), ex);
         }
         catch (ConversionException ex)
         {
-            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Problema na conversão de valores", "");
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Problema na conversão de valores", ex);
         }
         catch (NoSuchMethodException ex) 
         {
-            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Método passado -" + parametros.metodo + "- não existe no controller " + parametros.classeCompleto, "");
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Método passado -" + parametros.metodo + "- não existe no controller " + parametros.classeCompleto, ex);
         } 
         catch (IllegalAccessException ex) 
         {
@@ -255,13 +272,15 @@ public class VoyaServlet extends HttpServlet {
         catch (InvocationTargetException ex) 
         {
             Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
+        }
+        catch (InstantiationException ex) 
+        {
             Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, null, ex);
         } 
         catch (Exception ex) 
         {
             ex.printStackTrace();
-            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Erro geral. Controlador não capturou exceção devidamente", ex);
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Erro geral. Controlador não capturou exceção devidamente - " + parametros.classeCompleto + " - " + parametros.metodo, ex);
         }
         
         if (viewRetorno == null)

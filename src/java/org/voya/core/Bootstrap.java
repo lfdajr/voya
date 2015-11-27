@@ -16,8 +16,8 @@ public abstract class Bootstrap {
     public void inicializarConverters()
     {
         DateTimeConverter dtConverter = new DateConverter();  
-        //dtConverter.setPattern("dd/MM/yyyy"); 
-        dtConverter.setPattern("yyyy-MM-dd"); 
+        dtConverter.setPattern("dd/MM/yyyy"); 
+        //dtConverter.setPattern("yyyy-MM-dd"); 
         ConvertUtils.deregister(Date.class);  
         ConvertUtils.register(dtConverter, Date.class);  
     }

@@ -202,4 +202,44 @@ public abstract class ClasseDominio<T>
         return retorno;
     }
     
+    public static List findBy(String campo, Object valor, Class classe) throws Exception
+    {
+        EntityManager em = EMUtil.getEntityManager();
+        EntityTransaction tx = null;
+        List retorno = null;
+        try
+        {
+            tx = em.getTransaction();
+            tx.begin();
+            Query q = em.createQuery("from " + classe.getSimpleName() + " where " + campo + " = :valor");
+            q.setParameter("valor", valor);
+            retorno = q.getResultList();
+            tx.commit();
+        }
+        catch (EntityExistsException e)
+        {
+            if ( tx != null && tx.isActive() )
+                tx.rollback();
+            throw e;
+        }
+        catch (PersistenceException e)
+        {
+            if ( tx != null && tx.isActive() )
+                tx.rollback();
+            throw e;
+        }
+        catch (Exception e)
+        {
+            if ( tx != null && tx.isActive() )
+                tx.rollback();
+            throw e;
+        }
+        finally
+        {
+            em.close();
+        }
+        
+        return retorno;
+    }
+    
 }

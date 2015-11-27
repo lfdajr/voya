@@ -27,6 +27,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.RequestDispatcher;
@@ -62,6 +63,8 @@ public class VoyaServlet extends HttpServlet {
     
     private static Bootstrap bootstrap;
     protected static ServletFileUpload upload;
+    private Properties appMensagens;
+    
     
     @Override
     public void init() throws ServletException 
@@ -78,7 +81,7 @@ public class VoyaServlet extends HttpServlet {
         try {
             //Buscando uma classe org.voya.bootstrap.BootstrapImpl.class
             //Que deve ser colocada na aplicação cliente
-            Class boot = Class.forName("org.voya.bootstrap.BootstrapImpl");
+            Class boot = Class.forName("org.voya.config.BootstrapImpl");
             bootstrap = (Bootstrap) boot.newInstance();
             bootstrap.inicializar();
             bootstrap.inicializarConverters();
@@ -91,6 +94,19 @@ public class VoyaServlet extends HttpServlet {
         //Processando forma de upload
         DiskFileItemFactory factory = new DiskFileItemFactory();
         upload = new ServletFileUpload(factory);
+        
+        
+        //Processando arquivo de mensagens
+        appMensagens = new Properties();
+        try 
+        {
+            appMensagens.load(getServletContext().getResourceAsStream("/WEB-INF/resources.properties"));
+        } 
+        catch (IOException ex) 
+        {
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Não foi possível carregar o arquivo de mensagens WEB-INF/resources.properties", ex);
+        }
+        
     }
     
     /*
@@ -136,7 +152,7 @@ public class VoyaServlet extends HttpServlet {
         }
         else
         {
-            p = new Parametros("LoginLogoutController", parametros[parametros.length - 1], "org.voya.core.security.");
+            p = new Parametros("LoginLogout", parametros[parametros.length - 1], "org.voya.core.security.");
             return p;
         }
         
@@ -148,7 +164,7 @@ public class VoyaServlet extends HttpServlet {
         boolean permitidoExecucao = true;
         String viewRetorno = null;
         
-        //Processando metodos para acelerar buscar posteriores
+        //Processando metodos para acelerar buscas posteriores
         Parametros parametros = null;
         try {
             parametros = inicializarMaps(request.getRequestURI());
@@ -193,12 +209,13 @@ public class VoyaServlet extends HttpServlet {
                 
                 if (instancia instanceof ValidatedController)
                 {
-                    Validator validador = new Validator(request);
+                    Validator validador = new Validator(request, appMensagens);
                     viewRetorno = ((ValidatedController)instancia).validate(validador, parametros.metodo);
                     if (validador.hasErrors())
                     {
                         request.setAttribute(Globals.ERROR_VAR, validador.getErrors());
-                        throw new ValidationException();
+                        //permitidoExecucao = false;
+                        throw new ValidationException(validador);
                     }
                 }
 
@@ -212,7 +229,8 @@ public class VoyaServlet extends HttpServlet {
                     metodo = classeController.getMethod(parametros.metodo, tipo);
                     viewRetorno = (String) metodo.invoke(instancia, request);
                 }
-                else if (permitidoExecucao)
+                else if (permitidoExecucao) //Se o método tem um tipo de parâmetro diferente de todos é porque o usuário está passando 
+                    //um parâmetro que deve ser alimentado pelo request.
                 {
                     //metodo = classeController.getMethod(parametros.metodo, tipo, HttpServletRequest.class);
                     Object bean = tipo.newInstance();
@@ -233,15 +251,15 @@ public class VoyaServlet extends HttpServlet {
         }
         catch (ValidationException ex)
         {
-            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Erro de validação", "");
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.WARNING, "Erro de validação - " + ex.getValidador().getErrors().toString(), ex);
         }
         catch (ConversionException ex)
         {
-            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Problema na conversão de valores", "");
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Problema na conversão de valores", ex);
         }
         catch (NoSuchMethodException ex) 
         {
-            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Método passado -" + parametros.metodo + "- não existe no controller " + parametros.classeCompleto, "");
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Método passado -" + parametros.metodo + "- não existe no controller " + parametros.classeCompleto, ex);
         } 
         catch (IllegalAccessException ex) 
         {
@@ -254,17 +272,25 @@ public class VoyaServlet extends HttpServlet {
         catch (InvocationTargetException ex) 
         {
             Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
+        }
+        catch (InstantiationException ex) 
+        {
             Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, null, ex);
         } 
-        /*catch (Exception ex) 
+        catch (Exception ex) 
         {
             ex.printStackTrace();
-            throw new Exception("erro geral");
-        }*/
+            Logger.getLogger(VoyaServlet.class.getName()).log(Level.SEVERE, "Erro geral. Controlador não capturou exceção devidamente - " + parametros.classeCompleto + " - " + parametros.metodo, ex);
+        }
         
         if (viewRetorno == null)
+        {
             viewRetorno = "/WEB-INF/templates/" + parametros.classe + "/" + parametros.metodo + ".vm";
+        }
+        else if (viewRetorno.equals("json"))
+        {
+            viewRetorno = "retorno.json";
+        }
         
         RequestDispatcher nextView = request.getRequestDispatcher(viewRetorno);
         
@@ -339,9 +365,10 @@ class Parametros
     
     public Parametros(String classe, String metodo, String pacote)
     {
-        this.classe = classe;
+        
+        this.classe = classe + "Controller";
         this.metodo = metodo;
-        classeCompleto = pacote + classe;
+        classeCompleto = pacote + this.classe;
         metodoCompleto = classeCompleto + "." + metodo;
     }
     

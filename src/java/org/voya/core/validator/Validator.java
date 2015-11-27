@@ -1,6 +1,7 @@
 package org.voya.core.validator;
 
 import java.util.ArrayList;
+import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.validator.GenericValidator;
 
@@ -8,19 +9,20 @@ public class Validator
 {
     private HttpServletRequest request;
     private ArrayList errors;
+    private boolean erroPresente;
+    private Properties appMensagens;
     
-    public Validator(HttpServletRequest request)
+    public Validator(HttpServletRequest request, Properties appMensagens)
     {
         this.request = request;
         errors = new ArrayList();
+        erroPresente = false;
+        this.appMensagens = appMensagens;
     }
     
     public boolean hasErrors()
     {
-        if (errors.size() == 0)
-            return false;
-        else
-            return true;
+        return !errors.isEmpty();
     }
     
     public ArrayList getErrors()
@@ -28,19 +30,24 @@ public class Validator
         return errors;
     }
     
-    public boolean required(String field)
+    public boolean required(String field, String chaveOnError)
     {
-        return GenericValidator.isBlankOrNull(request.getParameter(field));
+        erroPresente = GenericValidator.isBlankOrNull(request.getParameter(field));
+        
+        if (erroPresente)
+            errors.add(appMensagens.get(chaveOnError));
+        
+        return erroPresente;
     }
     
-    public boolean date(String field, String pattern)
+    public boolean date(String field, String pattern, String chaveOnError)
     {
-        boolean retorno = GenericValidator.isDate(request.getParameter(field), pattern, true);
+        erroPresente = GenericValidator.isDate(request.getParameter(field), pattern, true);
         
-        if (!retorno)
-            errors.add(field);
+        if (!erroPresente)
+            errors.add(appMensagens.get(chaveOnError));
         
-        return retorno;
+        return erroPresente;
     }
                 
 }
